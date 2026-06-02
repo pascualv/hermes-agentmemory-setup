@@ -5,6 +5,7 @@ Replicate our persistent memory system on any machine. Tested on Fedora 43, Node
 **Docs:**
 - This file — installation and configuration
 - [USAGE-GUIDE.md](USAGE-GUIDE.md) — how Hermes actually uses agentmemory in practice (operational patterns, decision tree, examples)
+- [SYSTEM-PROMPT-ARCHITECTURE.md](SYSTEM-PROMPT-ARCHITECTURE.md) — complete system prompt anatomy: three tiers, every block, how SOUL.md + memory + skills + agentmemory compose into the final prompt
 
 ## Architecture
 
