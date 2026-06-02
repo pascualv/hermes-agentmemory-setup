@@ -2,6 +2,44 @@
 
 Documentación completa de cómo Hermes usa Playwright MCP para automatización de navegador. Dos modos, configuración, script de conveniencia, pitfalls reales, y flujo de trabajo operativo.
 
+## Dependencias del Sistema
+
+### Requeridas (ambos modos)
+
+| Dependencia | Versión mínima | Cómo verificar | Cómo instalar |
+|---|---|---|---|
+| Node.js | 18+ | `node --version` | [nvm](https://github.com/nvm-sh/nvm): `nvm install 24` |
+| npm/npx | incluido con Node | `npx --version` | viene con Node.js |
+| curl | cualquier | `curl --version` | `sudo dnf install curl` (Fedora) |
+| bash | 4+ | `bash --version` | preinstalado en Linux |
+
+### Adicionales para CDP mode
+
+| Dependencia | Versión mínima | Cómo verificar | Cómo instalar |
+|---|---|---|---|
+| Google Chrome | estable | `/opt/google/chrome/chrome --version` | [google.com/chrome](https://www.google.com/chrome/) |
+| pkill | cualquier | `which pkill` | `sudo dnf install procps-ng` (Fedora) |
+| python3 | 3.8+ | `python3 --version` | preinstalado en la mayoría de distros |
+
+### Adicionales para Extension mode
+
+| Dependencia | Requerido | Dónde obtener |
+|---|---|---|
+| Chrome o Edge | sí | navegador ya instalado |
+| Playwright Extension | sí | [Chrome Web Store](https://chromewebstore.google.com/detail/playwright-extension/mmlmfjhmonkocbjadbfplnigmagldckm) |
+| Token de extensión | sí (para auto-approve) | ícono de extensión → copiar `PLAYWRIGHT_MCP_EXTENSION_TOKEN` |
+
+### Paquetes npm (instalados automáticamente por npx)
+
+`npx @playwright/mcp@latest` descarga automáticamente:
+- `@playwright/mcp` (v0.0.75+)
+- `playwright` (v1.61.0-alpha)
+- `playwright-core` (v1.61.0-alpha)
+
+No necesitas instalarlos globalmente. `npx` los cachea en `~/.npm/_npx/`.
+
+---
+
 ## Arquitectura
 
 ```
