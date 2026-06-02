@@ -2,6 +2,10 @@
 
 Replicate our persistent memory system on any machine. Tested on Fedora 43, Node v24, Hermes Agent v0.15.1.
 
+**Docs:**
+- This file — installation and configuration
+- [USAGE-GUIDE.md](USAGE-GUIDE.md) — how Hermes actually uses agentmemory in practice (operational patterns, decision tree, examples)
+
 ## Architecture
 
 ```
