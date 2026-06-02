@@ -214,6 +214,132 @@ The daemon stores data in `~/data/` (relative to systemd WorkingDirectory):
 
 **Backup:** Copy `~/data/` to preserve all memories, lessons, and sessions.
 
+## Compression Providers
+
+The compression engine calls an LLM to summarize observations. Any OpenAI-compatible API works.
+
+### OpenAI (default)
+```ini
+Environment="OPENAI_API_KEY=sk-..."
+Environment="OPENAI_BASE_URL=https://api.openai.com/v1"
+```
+
+### DeepSeek (tested, works with crystallize)
+```ini
+Environment="OPENAI_API_KEY=sk-..."
+Environment="OPENAI_BASE_URL=https://api.deepseek.com/v1"
+# Requires setting the model via ~/.agentmemory/.env (see below)
+```
+
+### Xiaomi Mimo
+```ini
+Environment="OPENAI_API_KEY=tp-sw1-..."
+Environment="OPENAI_BASE_URL=https://token-plan-sgp.xiaomimimo.com/v1"
+```
+
+### DashScope (Alibaba/Qwen)
+```ini
+Environment="OPENAI_API_KEY=sk-..."
+Environment="OPENAI_BASE_URL=https://coding-intl.dashscope.aliyuncs.com/v1"
+```
+
+## Daemon Environment (.env)
+
+The daemon also reads `~/.agentmemory/.env` for runtime configuration. This file controls the compression model, features, and MCP tool visibility.
+
+Create `~/.agentmemory/.env`:
+
+```bash
+# Compression model (must match OPENAI_BASE_URL provider)
+OPENAI_MODEL=deepseek-v3-flash        # or gpt-4o-mini, qwen-turbo, etc.
+OPENAI_MAX_TOKENS=8192
+
+# Feature flags
+GRAPH_EXTRACTION_ENABLED=true
+CONSOLIDATION_ENABLED=true
+AGENTMEMORY_AUTO_COMPRESS=true
+AGENTMEMORY_INJECT_CONTEXT=true
+SNAPSHOT_ENABLED=true
+
+# MCP tool visibility
+AGENTMEMORY_TOOLS=all                  # 'all' exposes all 53 tools; default is 8
+```
+
+**Note:** The systemd service Environment= variables take precedence over `.env`. If you set `OPENAI_API_KEY` in both places, the service file wins.
+
+## Practical Usage Guide
+
+These are the agentmemory MCP tools available in Hermes, organized by when to use them.
+
+### Session Lifecycle
+
+| When | Tool | Purpose |
+|---|---|---|
+| Start of complex task | `memory_action_create` | Create work item with dependencies |
+| During work | `memory_action_update` | Track progress (pending → active → done) |
+| End of action chain | `memory_crystallize` | Compress completed work into a digest |
+| Periodically | `memory_consolidate` | Run 4-tier pipeline (working → episodic → semantic → procedural) |
+| Periodically | `memory_reflect` | Synthesize higher-order insights from patterns |
+
+### Knowledge Capture
+
+| When | Tool | Purpose |
+|---|---|---|
+| Discover a pattern/lesson | `memory_lesson_save` | Save for future sessions (confidence-scored) |
+| Important decision | `memory_save` | Persistent fact (architecture, bug, workflow) |
+| Something fails repeatedly | `memory_lesson_save` | Lesson with high confidence |
+| Edit files | `memory_file_history` | Track what changed in specific files |
+
+### Recall (before acting)
+
+| When | Tool | Purpose |
+|---|---|---|
+| Before deciding | `memory_recall` | Search past observations by keyword |
+| Before deciding | `memory_smart_search` | Hybrid semantic + keyword search |
+| Check prior lessons | `memory_lesson_recall` | Search lessons by query |
+| Verify a memory | `memory_verify` | Trace citation chain to source |
+
+### Multi-Agent Coordination
+
+| When | Tool | Purpose |
+|---|---|---|
+| Message another agent | `memory_signal_send` | Typed message (info, request, alert, handoff) |
+| Check messages | `memory_signal_read` | Read messages for your agent ID |
+| Share knowledge | `memory_team_share` | Share memory/observation with team |
+| See team activity | `memory_team_feed` | Recent shared items from all members |
+| Sync across instances | `memory_mesh_sync` | Push/pull memories between agentmemory instances |
+
+### Workflows & Gates
+
+| When | Tool | Purpose |
+|---|---|---|
+| Complex dependencies | `memory_sentinel_create` | Event-driven watcher (webhook, timer, threshold) |
+| External approval | `memory_checkpoint` | CI/deploy/approval gate |
+| Trigger a gate | `memory_sentinel_trigger` | Externally fire a sentinel |
+| Exploratory work | `memory_sketch_create` | Ephemeral action graph (auto-expires) |
+| Commit exploratory work | `memory_sketch_promote` | Promote sketch to permanent actions |
+
+### Inspection & Debug
+
+| Tool | Purpose |
+|---|---|
+| `memory_diagnose` | Health checks across all subsystems |
+| `memory_heal` | Auto-fix stuck actions, stale leases, orphaned data |
+| `memory_audit` | Audit trail of memory operations |
+| `memory_export` | Export all memory data as JSON |
+| `memory_timeline` | Chronological observations around a date |
+| `memory_profile` | User/project profile with top concepts |
+| `memory_patterns` | Detect recurring patterns across sessions |
+| `memory_insight_list` | List synthesized insights |
+| `memory_graph_query` | Query the knowledge graph |
+
+## Known Limitations (v0.9.24)
+
+- **Slots bug:** `memory_slot_create` returns 500 in v0.9.24. Not a config issue — upstream bug.
+- **Hooks are Claude Code only:** The agentmemory hooks (session-start, post-tool-use, etc.) are designed for Claude Code's hook system. In Hermes CLI, session observation capture works differently — Hermes has its own native memory system that persists between sessions. The MCP tools work fine regardless.
+- **Compression model must match provider:** If `OPENAI_BASE_URL` points to DeepSeek, `OPENAI_MODEL` must be a DeepSeek model (e.g., `deepseek-v3-flash`). Mismatched model names cause 400 errors (non-fatal).
+- **Crystallize/Reflect/Consolidate require daemon:** These tools call the daemon's LLM pipeline. The daemon must be running with correct `OPENAI_API_KEY` and `OPENAI_BASE_URL` in the service file or `.env`.
+
 ## Troubleshooting
 
 ### Compression errors in logs
